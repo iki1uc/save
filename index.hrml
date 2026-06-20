@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>ROOT SYSTEM</title>
+<title>ROOT ONLINE</title>
 <style>
 body { background:#000; color:#0f0; font-family:monospace; padding:20px; }
 button { background:#111; color:#0f0; border:1px solid #0f0; padding:10px; }
@@ -10,44 +10,25 @@ button { background:#111; color:#0f0; border:1px solid #0f0; padding:10px; }
 </head>
 <body>
 
-<h2>ROOT SYSTEM</h2>
+<h2>ROOT ONLINE SYSTEM</h2>
 <pre id="out"></pre>
 
-<button onclick="SAVE()">SAVE</button>
-<button onclick="LOAD()">LOAD</button>
-<button onclick="simulateError()">ERROR</button>
+<button onclick="LOAD()">LOAD ROOT.STATE</button>
 
 <script>
 // ===============================
-// ROOT STATE
+// ROOT STATE (nur online lesen)
 // ===============================
-let ROOT = 0;          // 1-Bit Systemzustand
-let E8   = Array(8).fill(0);     // 8-Eck QI-Träger
-let E16  = Array(16).fill(0);    // 16-Eck IQ-Träger
+let ROOT = 0;
+let E8   = Array(8).fill(0);
+let E16  = Array(16).fill(0);
 
 let errors_phase1 = 0;
 let errors_phase2 = 0;
 let phase = 1;
 
 // ===============================
-// SAVE
-// ===============================
-async function SAVE() {
-    const data =
-        ROOT + "\n" +
-        E8.join("") + "\n" +
-        E16.join("");
-
-    await fetch("root.state", {
-        method: "PUT",
-        body: data
-    });
-
-    display("SAVED\n" + data);
-}
-
-// ===============================
-// LOAD
+// LOAD (nur lesen, kein schreiben)
 // ===============================
 async function LOAD() {
     const res = await fetch("root.state");
@@ -58,18 +39,12 @@ async function LOAD() {
     E8   = lines[1].split("").map(Number);
     E16  = lines[2].split("").map(Number);
 
-    display("LOADED\n" + text);
+    display("LOADED ONLINE\n" + text);
 }
 
 // ===============================
 // ERROR COUNTING
 // ===============================
-function simulateError() {
-    ERROR();
-    display("ERROR registered. Phase=" + phase +
-            " P1=" + errors_phase1 + " P2=" + errors_phase2);
-}
-
 function ERROR() {
     if (phase === 1) errors_phase1++;
     else errors_phase2++;
@@ -102,7 +77,7 @@ async function SCHUTZ() {
 function confirm_window() {
     return new Promise(resolve => {
         setTimeout(() => {
-            display("Taste drücken (beliebige Taste)...");
+            display("Taste drücken…");
             window.onkeydown = () => {
                 window.onkeydown = null;
                 resolve(true);
@@ -131,7 +106,7 @@ function three_hits() {
 }
 
 // ===============================
-// Rücksprung
+// Rücksprung (nur LOAD)
 // ===============================
 function MODI_ALT() {
     LOAD();
@@ -148,4 +123,3 @@ function display(msg) {
 
 </body>
 </html>
-
