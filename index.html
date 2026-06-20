@@ -1,1 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ROOT ONLINE V9</title>
+<style>
+body { background:#000; color:#0f0; font-family:monospace; padding:20px; }
+button { background:#111; color:#0f0; border:1px solid #0f0; padding:10px; margin-right:10px; }
+#status { margin-top:20px; white-space:pre; }
+</style>
+</head>
+<body>
 
+<h2>ROOT ONLINE SYSTEM – V9</h2>
+
+<div>
+    <button onclick="LOAD()">LOAD ROOT.STATE</button>
+    <button onclick="triggerError(1)">ERROR PHASE 1</button>
+    <button onclick="triggerError(2)">ERROR PHASE 2</button>
+</div>
+
+<pre id="status"></pre>
+
+<script>
+// ===============================
+// ROOT STATE (read-only)
+// ===============================
+let ROOT = 0;
+let E8   = Array(8).fill(0);
+let E16  = Array(16).fill(0);
+
+let errors_phase1 = 0;
+let errors_phase2 = 0;
+let phase = 1;
+
+// ===============================
+// LOAD
+// ===============================
+async function LOAD() {
+    const res = await fetch("root.state");
+    const text = await res.text();
+    const lines = text.split("\n");
+
+    ROOT = parseInt(lines[0]);
+    E8   = lines[1].split("").map(Number);
+    E16  = lines[2].split("").map(Number);
+
+    display("LOADED\n" + text);
+}
+
+// ===============================
+// ERROR
+// ===============================
+function triggerError(p) {
+    if (p === 1) errors_phase1++;
+    if (p === 2) errors_phase2++;
+
+    displayStatus();
+    SCHUTZ();
+}
+
+// ===============================
+// SCHUTZ
+// ===============================
+async function SCHUTZ() {
+    if (errors_phase1 >= 4 && errors_phase2 >= 3) {
+        display("SCHUTZ aktiv – 3 Sekunden warten…");
+
+        const ok = await confirm_window();
+        if (ok) {
+            const hits = await three_hits();
+            if (hits) {
+                display("SCHUTZ bestanden – weiter.");
+                return;
+            }
+        }
+        MODI_ALT();
+    }
+}
+
+// ===============================
+// 3 Sekunden + Taste
+// ===============================
+function confirm_window() {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            display("Taste drücken…");
+            window.onkeydown = () => {
+                window.onkeydown = null;
+                resolve(true);
+            };
+        }, 3000);
+    });
+}
+
+// ===============================
+// 3 Treffer
+// ===============================
+function three_hits() {
+    return new Promise(resolve => {
+        let hits = 0;
+        display("3 Treffer nötig…");
+
+        window.onclick = () => {
+            hits++;
+            display("Treffer: " + hits + "/3");
+            if (hits >= 3) {
+                window.onclick = null;
+                resolve(true);
+            }
+        };
+    });
+}
+
+// ===============================
+// MODI_ALT
+// ===============================
+function MODI_ALT() {
+    LOAD();
+    display("Rücksprung in alten Zustand (MODI_ALT).");
+}
+
+// ===============================
+// STATUS
+// ===============================
+function display(msg) {
+    document.getElementById("status").textContent = msg;
+}
+
+function displayStatus() {
+    document.getElementById("status").textContent =
+        "ROOT: " + ROOT +
+        "\nE8:   " + E8.join("") +
+        "\nE16:  " + E16.join("") +
+        "\nPhase: " + phase +
+        "\nErrors P1: " + errors_phase1 +
+        "\nErrors P2: " + errors_phase2;
+}
+</script>
+
+</body>
+</html>
